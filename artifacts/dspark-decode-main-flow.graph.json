@@ -1,0 +1,23 @@
+{
+  "nodes": [
+    {"id": "title", "label": "#30261 Decode 主流程: Propose -> Schedule -> Verify -> Accept", "x": 40, "y": 20, "w": 980, "h": 36, "shape": "rect", "fill": "#ffffff", "stroke": "#ffffff"},
+    {"id": "in1", "label": "draft_input / bonus token", "x": 56, "y": 130, "w": 228, "h": 40, "shape": "rounded", "fill": "#dae8fc", "stroke": "#6c8ebf"},
+    {"id": "in2", "label": "当前 seq_lens / 序列状态", "x": 56, "y": 186, "w": 228, "h": 40, "shape": "rounded", "fill": "#dae8fc", "stroke": "#6c8ebf"},
+    {"id": "in3", "label": "draft hidden / confidence 相关状态", "x": 56, "y": 242, "w": 228, "h": 40, "shape": "rounded", "fill": "#dae8fc", "stroke": "#6c8ebf"},
+    {"id": "in4", "label": "gamma / verify_num_draft_tokens", "x": 56, "y": 298, "w": 228, "h": 40, "shape": "rounded", "fill": "#dae8fc", "stroke": "#6c8ebf"},
+    {"id": "step1", "label": "1. DraftBlockProposer.propose\n生成候选 token blocks", "x": 350, "y": 140, "w": 170, "h": 200, "shape": "rounded", "fill": "#dae8fc", "stroke": "#6c8ebf"},
+    {"id": "step2", "label": "2. 计算 confidence", "x": 570, "y": 160, "w": 110, "h": 180, "shape": "rounded", "fill": "#ffe6cc", "stroke": "#d79b00"},
+    {"id": "step3", "label": "3. 解析 verify budget", "x": 690, "y": 160, "w": 110, "h": 180, "shape": "rounded", "fill": "#ffe6cc", "stroke": "#d79b00"},
+    {"id": "step4", "label": "4. schedule layout", "x": 810, "y": 160, "w": 110, "h": 180, "shape": "rounded", "fill": "#ffe6cc", "stroke": "#d79b00"},
+    {"id": "step5", "label": "5. TargetVerifyExecutor.verify", "x": 960, "y": 140, "w": 120, "h": 200, "shape": "rounded", "fill": "#d5e8d4", "stroke": "#82b366"},
+    {"id": "step6", "label": "6. accept / commit", "x": 1110, "y": 140, "w": 100, "h": 200, "shape": "rounded", "fill": "#b0d4a8", "stroke": "#507e32"},
+    {"id": "summary", "label": "社区版 DSpark 的 decode 关键：不是 draft 完就验满，而是 propose 后按 confidence 调度 verify 窗口，再由 target 验证提交。", "x": 40, "y": 540, "w": 1190, "h": 56, "shape": "rounded", "fill": "#fff2cc", "stroke": "#d6b656"}
+  ],
+  "edges": [
+    {"source": "step1", "target": "step2", "arrow": true},
+    {"source": "step2", "target": "step3", "arrow": true},
+    {"source": "step3", "target": "step4", "arrow": true},
+    {"source": "step4", "target": "step5", "arrow": true},
+    {"source": "step5", "target": "step6", "arrow": true}
+  ]
+}
