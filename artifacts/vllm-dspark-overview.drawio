@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0" type="device">
+  <diagram id="vllm-dspark" name="vLLM DSpark">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1460" pageHeight="880" math="0" shadow="0" background="#faf6ee">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;vLLM 中的 DSpark：实现与演进&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontColor=#16418c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="10" width="1380" height="38" as="geometry"/>
+        </mxCell>
+        <mxCell id="subtitle" value="核心 #46995 已合入（2026-07-01）；可变长 verify 沿 RFC #48202 演进中" style="text;html=1;align=center;verticalAlign=middle;fontSize=13;fontColor=#8b8577;" vertex="1" parent="1">
+          <mxGeometry x="40" y="48" width="1380" height="22" as="geometry"/>
+        </mxCell>
+
+        <!-- (1) 核心实现 -->
+        <mxCell id="p1" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="920" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1_h" value="&lt;b&gt;(1)　核心实现（#46995，已合入）&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="p1">
+          <mxGeometry x="14" y="8" width="400" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1_l" value="&lt;b&gt;非因果滑窗注意力的取巧实现&lt;/b&gt;&lt;br&gt;&lt;br&gt;•  不重写 MLA：复用现有 SparseMLA 后端&lt;br&gt;&lt;br&gt;•  扩大 topk，让 block 内 query 互相进入&lt;br&gt;    彼此的 topk indices（与因果无关）&lt;br&gt;&lt;br&gt;•  精确等价（test_dspark_noncausal_sparse_mla）&lt;br&gt;    且复用高效 sparse attention kernels" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#e9f1fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=8;" vertex="1" parent="p1">
+          <mxGeometry x="14" y="40" width="300" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1_m" value="&lt;b&gt;单图捕获&lt;/b&gt;&lt;br&gt;&lt;br&gt;•  一个 CUDA graph 同时 capture&lt;br&gt;    DFlash backbone + 自回归采样循环&lt;br&gt;&lt;br&gt;•  BS1 实测：verify 11~13ms、&lt;br&gt;    backbone 0.6ms、AR 采样 0.6ms&lt;br&gt;&lt;br&gt;•  8×B300 E2E ~14ms，AL≈5&lt;br&gt;    → &amp;gt;350 TPS" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f5faf3;strokeColor=#82b366;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=8;" vertex="1" parent="p1">
+          <mxGeometry x="330" y="40" width="290" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="p1_r" value="&lt;b&gt;配置与采样&lt;/b&gt;&lt;br&gt;&lt;br&gt;•  speculative_config：method=dspark、&lt;br&gt;    num_speculative_tokens=7&lt;br&gt;&lt;br&gt;•  draft_sample_method=probabilistic&lt;br&gt;    （概率起草，非 greedy）&lt;br&gt;&lt;br&gt;•  代码：v1/worker/gpu/spec_decode/&lt;br&gt;    dspark/speculator.py（DSparkSpeculator）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#e8944a;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=8;" vertex="1" parent="p1">
+          <mxGeometry x="636" y="40" width="270" height="150" as="geometry"/>
+        </mxCell>
+
+        <!-- (2) 可变长 verify 演进 -->
+        <mxCell id="p2" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="296" width="920" height="230" as="geometry"/>
+        </mxCell>
+        <mxCell id="p2_h" value="&lt;b&gt;(2)　可变长 verify 演进线（对应 SGLang 的 Planner / SPS）&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="p2">
+          <mxGeometry x="14" y="8" width="560" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="ev1" value="&lt;b&gt;RFC #48202&lt;/b&gt;&lt;br&gt;&lt;br&gt;per-request effective&lt;br&gt;proposal lengths&lt;br&gt;&lt;br&gt;同一 batch 内各请求&lt;br&gt;confident-prefix 差异大&lt;br&gt;（如 [7,4,0,7,2,1,0,0]）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
+          <mxGeometry x="14" y="42" width="200" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="ev2" value="&lt;b&gt;#48204 参考实现&lt;/b&gt;&lt;br&gt;&lt;br&gt;confidence_threshold 配置&lt;br&gt;&lt;br&gt;DSparkConfidenceHead&lt;br&gt;&lt;br&gt;proposal_lengths&lt;br&gt;（定形 int32，可捕获）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
+          <mxGeometry x="248" y="42" width="200" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="ev3" value="&lt;b&gt;#48692 MRV2 Adaptive SD&lt;/b&gt;&lt;br&gt;&lt;br&gt;每请求变长 + FULL CUDA graph&lt;br&gt;&lt;br&gt;结构化输出 / logprobs 兼容&lt;br&gt;&lt;br&gt;预算按 batch size 静态给定&lt;br&gt;（尚无在线调度）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fff8f0;strokeColor=#e8944a;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
+          <mxGeometry x="482" y="42" width="200" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="ev4" value="&lt;b&gt;#47808 confidence-scheduled&lt;/b&gt;（WIP）&lt;br&gt;&lt;br&gt;•  Triton kernel 按存活概率&lt;br&gt;    （confidence 累乘）排序 draft 槽位&lt;br&gt;•  启动时 profile 成本曲线，&lt;br&gt;    按 每 ms 接受 token 数 选预算&lt;br&gt;•  varlen decode cudagraph&lt;br&gt;&lt;br&gt;c=128: 1.71×、c=256: 2.19×（vs 固定 k）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#edf7ed;strokeColor=#82b366;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
+          <mxGeometry x="716" y="42" width="190" height="168" as="geometry"/>
+        </mxCell>
+        <mxCell id="ee1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="p2" source="ev1" target="ev2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ee2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="p2" source="ev2" target="ev3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ee3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="p2" source="ev3" target="ev4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- (3) 生态 right panel -->
+        <mxCell id="p3" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="980" y="80" width="440" height="446" as="geometry"/>
+        </mxCell>
+        <mxCell id="p3_h" value="&lt;b&gt;(3)　生态与并行域&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="8" width="300" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco1" value="&lt;b&gt;Target 家族&lt;/b&gt;：DeepSeek-V4 Pro/Flash、Qwen3、&#xa;Qwen3.5、Gemma4-12B、GLM-5.2、Kimi-K3" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e9f1fc;strokeColor=#6c8ebf;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="42" width="412" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco2" value="&lt;b&gt;硬件&lt;/b&gt;：NVIDIA（Blackwell #48167）、&#xa;ROCm gfx950（#47419）、XPU（#47677）" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f5faf3;strokeColor=#82b366;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="108" width="412" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco3" value="&lt;b&gt;checkpoint 生态&lt;/b&gt;：speculators 格式（#47093）；&#xa;DeepSeek 官方训练的 dspark_qwen3_8b_block7 等" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#e8944a;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="174" width="412" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco4" value="&lt;b&gt;TP 优化&lt;/b&gt;：Markov head 跨 rank 复制（#49731 已合入）&#xa;—— 与 SGLang collective-free refine 同构" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="240" width="412" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco5" value="&lt;b&gt;并行域&lt;/b&gt;：DCP 草稿支持（#48392）、&#xa;Kimi-K3 PP（#50138 WIP）、NIXL 配置校验（#49230）" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#f5f2ea;strokeColor=#8c8578;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="306" width="412" height="54" as="geometry"/>
+        </mxCell>
+        <mxCell id="eco6" value="&lt;b&gt;修复热点&lt;/b&gt;：prefix-cache 与 draft KV 组隔离（#48459 /&#xa;#47891 / #47926）、量化组合（#49133 / #50424）" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fce8e6;strokeColor=#d43a3a;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=middle;spacingLeft=12;spacingRight=8;" vertex="1" parent="p3">
+          <mxGeometry x="14" y="372" width="412" height="54" as="geometry"/>
+        </mxCell>
+
+        <!-- (4) 对比 -->
+        <mxCell id="p4" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="542" width="1380" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="p4_h" value="&lt;b&gt;(4)　与 SGLang 版对比&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="p4">
+          <mxGeometry x="14" y="8" width="300" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmp1" value="&lt;b&gt;注意力实现&lt;/b&gt;&lt;br&gt;&lt;br&gt;vLLM：SparseMLA + 扩大 topk&lt;br&gt;（不改 KV 工具链）&lt;br&gt;&lt;br&gt;SGLang：dsv4 后端 + 专用&lt;br&gt;Triton metadata kernels" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p4">
+          <mxGeometry x="14" y="40" width="256" height="148" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmp2" value="&lt;b&gt;可变长 verify&lt;/b&gt;&lt;br&gt;&lt;br&gt;SGLang：已合入（Planner +&lt;br&gt;SPS 成本表 + compact/ragged）&lt;br&gt;&lt;br&gt;vLLM：演进中（RFC → 参考实现&lt;br&gt;→ MRV2 → WIP 在线调度）" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p4">
+          <mxGeometry x="290" y="40" width="256" height="148" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmp3" value="&lt;b&gt;起草采样&lt;/b&gt;&lt;br&gt;&lt;br&gt;vLLM：probabilistic 概率起草&lt;br&gt;（AL 高于 MTP 最多 1.4×）&lt;br&gt;&lt;br&gt;SGLang：greedy 起草 +&lt;br&gt;target-only rejection sampling" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p4">
+          <mxGeometry x="566" y="40" width="256" height="148" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmp4" value="&lt;b&gt;分布式&lt;/b&gt;&lt;br&gt;&lt;br&gt;SGLang：PD 两条路线 +&lt;br&gt;PP context 累加协议&lt;br&gt;&lt;br&gt;vLLM：DCP 已支持，&lt;br&gt;PP/PD 仍在早期" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p4">
+          <mxGeometry x="842" y="40" width="256" height="148" as="geometry"/>
+        </mxCell>
+        <mxCell id="cmp5" value="&lt;b&gt;生态广度&lt;/b&gt;&lt;br&gt;&lt;br&gt;vLLM：6+ target 家族、&lt;br&gt;speculators 格式、三类硬件&lt;br&gt;&lt;br&gt;SGLang：DeepSeek 系为主，&lt;br&gt;GLM/Kimi/LFM2/Qwen 跟进" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fffefb;strokeColor=#8c8578;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p4">
+          <mxGeometry x="1118" y="40" width="248" height="148" as="geometry"/>
+        </mxCell>
+
+        <!-- Bottom summary -->
+        <mxCell id="summary" value="&lt;b&gt;两个社区殊途同归：都收敛到 confidence 驱动的可变长 verify + 全图捕获；vLLM 胜在多模型生态与实现取巧，SGLang 胜在调度完备与 PD/PP 分布式。&lt;/b&gt;" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f5f2ea;strokeColor=#b9b3a5;fontSize=14;fontColor=#1f3864;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="758" width="1380" height="54" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
