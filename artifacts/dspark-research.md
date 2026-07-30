@@ -258,9 +258,66 @@ Prefill 本地完成 capture → concat → 投影 → 写 draft KV，跨 PD 只
 
 ---
 
-## 12. 总结
+## 12. vLLM 的 DSpark（对比视角）
+
+![vLLM 中的 DSpark：实现与演进](vllm-dspark-overview.png)
+
+vLLM 社区对 DSpark 的支持起步与 SGLang 几乎同期，但走了明显不同的工程路线。
+
+### 12.1 核心实现（[#46995](https://github.com/vllm-project/vllm/pull/46995)，MERGED，2026-07-01）
+
+- **非因果注意力的取巧实现**：DSpark draft 需要 block 内的非因果滑窗注意力。vLLM 没有重写 MLA，而是**复用现有 SparseMLA 后端并扩大 topk**——让 block 内的 query 互相进入彼此的 topk indices（与因果无关），即以稀疏注意力机制"模拟"非因果注意力。数值精确等价（`test_dspark_noncausal_sparse_mla.py`），且最大限度复用了 KV cache 工具链与高效 sparse kernels。
+- **单图捕获**：一个 CUDA graph 同时 capture DFlash backbone + 整个自回归采样循环。BS1 实测：verify 11~13ms、backbone 0.6ms、AR 采样 0.6ms；8×B300 E2E ~14ms，AL≈5，>350 TPS。
+- **配置**：`speculative_config '{"method":"dspark","num_speculative_tokens":7,"draft_sample_method":"probabilistic"}'`。注意 vLLM 默认推荐 **probabilistic（概率）起草**，与 SGLang 的 greedy 起草不同；实测 AL 相对 MTP 基线最高 1.4×（DL=6 时 3.42 vs 2.60）。
+- **代码位置**：`vllm/v1/worker/gpu/spec_decode/dspark/speculator.py`（`DSparkSpeculator`）；模型侧 `qwen3_dspark.py` / `gemma4_dspark.py` / `deepseek_v4/{nvidia,amd,xpu}/dspark.py` / `kimi_k3/nvidia/dspark_mla.py`。
+
+### 12.2 可变长 verify 演进线（对应 SGLang #30261 的 Planner / SPS）
+
+SGLang 的 confidence-scheduled verify 已随 #30261 合入；vLLM 在同一方向上仍在演进，路径是"RFC → 参考实现 → 基建 → 在线调度"：
+
+| 阶段 | PR/RFC | 状态 | 内容 |
+|---|---|---|---|
+| 问题定义 | [RFC #48202](https://github.com/vllm-project/vllm/issues/48202) | OPEN | per-request effective proposal lengths：同一 batch 内各请求的 confident-prefix 长度差异极大（实测单步可见 `[7,4,0,7,2,1,0,0]`），批一致的 K 无论怎么选都要付出 batch 内方差的代价 |
+| 参考实现 | [#48204](https://github.com/vllm-project/vllm/pull/48204) | OPEN | `SpeculativeConfig.confidence_threshold` + `DSparkConfidenceHead`（Linear(hidden+markov_rank→1)）+ 定形 int32 `proposal_lengths`（graph 可捕获） |
+| 变长基建 | [#48692](https://github.com/vllm-project/vllm/pull/48692) | OPEN | MRV2 Adaptive SD：每请求变长 + FULL CUDA graph、结构化输出/logprobs 兼容、混合 prefill/decode 批；预算按 batch size 静态给定（`num_speculative_tokens_per_batch_size`），尚无在线调度 |
+| 在线调度 | [#47808](https://github.com/vllm-project/vllm/pull/47808) | OPEN (WIP) | confidence-scheduled verification：Triton kernel 按存活概率（per-position confidence 累乘）排序 draft 槽位、按"每毫秒接受 token 数"最大化选预算；**step 成本曲线在启动时用 dummy step profile**（capture limit 以下阶跃、以上线性插值——与 SGLang 的 SPS 离线成本表同构）；per-request confidence 做 EMA 平滑；decode cudagraph 变为 varlen |
+
+#47808 的实测数据揭示了这条线的动机：固定 k=7 在高并发下会"沉没"（c=256 时比 no-spec 还低 33%），而 adaptive 在 c=128 时 1.71×、c=256 时 2.19×（vs 固定 k），低并发与固定 k 打平。
+
+### 12.3 生态与并行域
+
+| 方向 | PR |
+|---|---|
+| Target 家族 | DeepSeek-V4 Pro/Flash（#46995）、Qwen3（DeepSeek 官方训练 `dspark_qwen3_8b_block7`）、Qwen3.5（[#47377](https://github.com/vllm-project/vllm/pull/47377)/[#47390](https://github.com/vllm-project/vllm/pull/47390)）、Gemma4-12B（[#47216](https://github.com/vllm-project/vllm/pull/47216)，merged）、GLM-5.2（speculators 格式）、Kimi-K3（`dspark_mla`） |
+| checkpoint 生态 | speculators 格式支持（[#47093](https://github.com/vllm-project/vllm/pull/47093)，merged）；[#49617](https://github.com/vllm-project/vllm/pull/49617)/[#48932](https://github.com/vllm-project/vllm/pull/48932)/[#30982-类似问题](https://github.com/vllm-project/vllm/pull/49646) 修复加载 |
+| 硬件 | Blackwell FlashInfer 非因果 draft 注意力（[#48167](https://github.com/vllm-project/vllm/pull/48167)，merged）、ROCm gfx950（[#47419](https://github.com/vllm-project/vllm/pull/47419)，merged）、XPU（[#47677](https://github.com/vllm-project/vllm/pull/47677)，merged） |
+| TP 优化 | **Markov head 跨 rank 复制**（[#49731](https://github.com/vllm-project/vllm/pull/49731)，merged）：去掉每 draft 位置一次 all-reduce + full-vocab gather——与 SGLang collective-free refine 的 embedding 复制完全同构，两社区独立收敛到同一优化 |
+| 并行域 | DCP 草稿支持（[#48392](https://github.com/vllm-project/vllm/pull/48392)：DCP-aware slot mapping + KV-head 复制 draft cache）、Kimi-K3 PP（[#50138](https://github.com/vllm-project/vllm/pull/50138)，WIP）、K3 AR fusion（[#50242](https://github.com/vllm-project/vllm/pull/50242)）、NIXL 投机配置校验（[#49230](https://github.com/vllm-project/vllm/pull/49230)） |
+| 修复热点 | prefix-cache/offloading 与 draft KV 组隔离（[#48459](https://github.com/vllm-project/vllm/pull/48459)/[#47891](https://github.com/vllm-project/vllm/pull/47891)/[#47926](https://github.com/vllm-project/vllm/pull/47926)）、量化组合（[#49133](https://github.com/vllm-project/vllm/pull/49133) NVFP4 target 污染 MXFP4 draft、[#50424](https://github.com/vllm-project/vllm/pull/50424) 量化 Markov head、[#47584](https://github.com/vllm-project/vllm/pull/47584) rowwise-fp8 draft lm_head）、draft KV dtype（[#48381](https://github.com/vllm-project/vllm/pull/48381)）、bonus-anchor 宽度（[#48909](https://github.com/vllm-project/vllm/pull/48909)）、kernel 预热（[#48804](https://github.com/vllm-project/vllm/pull/48804)） |
+
+### 12.4 vLLM vs SGLang 关键对照
+
+| 维度 | vLLM | SGLang |
+|---|---|---|
+| 核心状态 | #46995 merged（2026-07-01） | #30261 merged（2026-07 中） |
+| 非因果 draft 注意力 | 复用 SparseMLA + 扩大 topk（不改 KV 工具链） | dsv4 后端 + 专用 Triton attn-metadata kernels |
+| 起草采样 | probabilistic 概率起草（AL 相对 MTP 最高 1.4×） | greedy 起草 + target-only rejection sampling（greedy 无损为先） |
+| 可变长 verify | 演进中（RFC #48202 → #48204 → #48692 → #47808 WIP） | **已合入**（Planner：confidence→budget→layout + SPS 成本表 + STS 校准 + compact/ragged） |
+| verify 成本模型 | 启动时 dummy step 在线 profile（#47808） | 离线 profile 的 SPS cost table（JSON，`dspark_sps_profiler`） |
+| refine/Markov TP 优化 | Markov head 复制（#49731 merged） | collective-free refine（embedding 复制 + tiny MAX all-reduce，#29538 起） |
+| PD 分离 | 早期（NIXL 校验 #49230） | 两条完整路线（decode 侧 hidden 流式 bootstrap / prefill 侧 draft KV 直传） |
+| PP | Kimi-K3 WIP（#50138） | #32281（非 PD）+ #32793（PP+PD ctx_acc 协议） |
+| DCP | 已支持（#48392） | Kimi DCP 修复中（#32828，DCP+DSPARK OOB） |
+| 生态广度 | 6+ target 家族、speculators 格式、NV/ROCm/XPU 三类硬件 | DeepSeek 系为主，GLM/Kimi/LFM2/Qwen 跟进，NV/ROCm |
+
+**一句话对照**：两个社区殊途同归——都收敛到"confidence 驱动的可变长 verify + 全图捕获 + Markov head 复制"；vLLM 胜在多模型生态与注意力实现的取巧（SparseMLA 复用），SGLang 胜在调度完备度（SPS/STS/compact/ragged 已合入）与 PD/PP 分布式深度。
+
+---
+
+## 13. 总结
 
 1. **算法层**：DSpark 用"target hidden 驱动的 block draft + collective-free Markov refine + confidence cap + block verify"取代逐 token 起草，在 DeepSeek-V4 上单流最高 2.3× 加速、accept length ~3.7、greedy 无损。
 2. **工程层**：合入版（#30261）的关键不是"把 DSpark 跑通"，而是把它做成**可调度的组件化 speculative 系统**——Planner（confidence → budget → layout）与 Executor（verify → accept）解耦，SPS/STS 提供成本与校准数据面，compact/ragged 双执行路径全部进 CUDA graph。
 3. **分布式扩展**：PD 上两条路线并行演进（decode 侧 hidden 流式 bootstrap vs prefill 侧 draft KV 直传）；PP 上以"最后 rank 持有 draft + PPProxyTensors 中继"为骨架；PP+PD 的难点收敛为一个数学问题（RMSNorm 必须在完整求和之后），解法是固定载荷的 ctx_acc 累加协议，同时保持 PD 数据面不动。
 4. **社区状态**：核心已合入，PD/PP/多硬件/多模型支线全部处于活跃 review 中；风险点集中在 CUDA graph 一致性与多并行域（TP/DP/PP/PD/CP）状态一致性。
+5. **跨社区视角**：vLLM 的 DSpark（#46995）与 SGLang 独立演化却收敛到相同的关键优化（confidence 可变长 verify、全图捕获、Markov head TP 复制）；vLLM 目前生态更广、调度较浅，SGLang 调度完备、分布式更深，二者的差异本身就是 DSpark 工程化路线图的最好注脚。
