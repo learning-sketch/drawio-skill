@@ -81,6 +81,8 @@ DSpark 是 **DeepSeek-V4 原生自带的 block 级投机解码（speculative dec
 
 ## 3. 单步协议：Draft → Refine → Verify（对应图 3，来源 #29538）
 
+![图 3：DSpark 单步协议 Draft → Refine → Verify](dspark-single-step-protocol.png)
+
 单个 decode step 内的 Worker 层执行细节：
 
 **输入**：target fused hidden states、bonus token / 当前序列状态、`block_size = gamma`（默认从 draft checkpoint 的 `block_size` 自动推断；verify 窗口 = gamma + 1）、`confidence_threshold`。draft 不靠自己的完整 token KV，而是由 target hidden 驱动。
@@ -106,6 +108,8 @@ DSpark 是 **DeepSeek-V4 原生自带的 block 级投机解码（speculative dec
 
 ## 4. 组件化架构（对应图 1 / 图 2，来源 #30261）
 
+![图 2：方案设计总览（DSparkWorkerV2 组件架构）](dspark-design-overview.png)
+
 合入版将 DSpark 拆为 `python/sglang/srt/speculative/dspark_components/` 组件包（类名均已对照 main 分支源码核实）：
 
 | 组件 | 文件 | 职责 |
@@ -124,6 +128,8 @@ DSpark 是 **DeepSeek-V4 原生自带的 block 级投机解码（speculative dec
 模型侧：`models/deepseek_v4_dspark.py`（`DeepseekV4ForCausalLMDSpark`，3-stage MTP，target-layer capture，heads 读 config 兼容 Flash/Pro）与 `models/dspark.py`；draft 的 `embed_tokens` / `lm_head` 绑定 target 已加载权重。
 
 配置：`--speculative-algorithm DSPARK`、`--speculative-dspark-block-size`（默认从 checkpoint 推断 gamma）、`--speculative-dspark-confidence-threshold`、`--speculative-dspark-sps-table-path`、`--speculative-dspark-confidence-sts-path`、`--speculative-dspark-align-verify-tokens-to-graph-tier`。
+
+![图 1：#30261 Decode 主流程](dspark-decode-main-flow.png)
 
 **Decode 主流程六步**（对应图 1）：
 `DraftBlockProposer.propose` → ② 计算 confidence（来自 `proposal.confidence` 或 `DSparkVerifyPlanner.compute_confidence_tensor`）→ ③ `resolve_verify_token_budget` → ④ `schedule_layout`（compact/ragged）→ ⑤ `TargetVerifyExecutor.verify`（run_compact / run_non_compact → logits/hidden）→ ⑥ `accept_and_finalize`（更新 draft KV，产出 next_draft_input）。
@@ -169,6 +175,8 @@ accept length 稳定在 ~3.6–3.7；temperature 1.0 采样验证吞吐与 greed
 
 ## 7. PD 分离支持（对应图 4）
 
+![图 4：DSpark 如何支持 PD（Prefill-Decode 分离）](dspark-pd-support.png)
+
 **问题**：DSpark draft 依赖 target hidden 初始化 draft 侧状态；PD 模式下 Prefill/Decode 分进程，Decode 无法本地取得这些 hidden，可能带着无效 `spec_info` / draft KV 进入投机解码。
 
 **社区两条路线：**
@@ -199,6 +207,8 @@ Prefill 本地完成 capture → concat → 投影 → 写 draft KV，跨 PD 只
 
 ### 9.1 问题（图 6）
 
+![图 6：PP + PD + DSpark 当前问题](dspark-pp-pd-problem.png)
+
 - **可用**：非 PP 的 PD 路径——Prefill 捕获 h1~h5 → concat hidden = `[N, 5 × hidden_size]` → 投影（fc → RMSNorm → KVProj）→ Prefill 侧写 draft KV → PD 传输 target KV + draft KV（不传 hidden states）→ Decode 接收 KV 后直接 propose/verify。数值正确。
 - **失效**：开启 PP 后，target hidden 分散在各 PP stage，每个 rank 只有本地 `[N, hidden_size]`，而 draft KV 注入期望 concat 后的 `[N, 5 × hidden_size]`（如 35840 = 5 × 7168）——维度不匹配，失败点在 **Prefill 侧 draft KV 注入（尚未进入 PD）**。
 - **无效修复**：
@@ -207,6 +217,8 @@ Prefill 本地完成 capture → concat → 投影 → 写 draft KV，跨 PD 只
 - 结论：特征分散、无法直接注入 → 需要 **PP-aware context 累加**。
 
 ### 9.2 方案（图 5，#32793）
+
+![图 5：PP 感知的 DSpark Context 累加](dspark-pp-context-accumulation.png)
 
 核心恒等式：`concat(h1..hk) @ W_fc.T == sum_i (hi @ Wi.T)` —— 先在各 PP rank 累加 partial context，只在最后一个 PP rank 做一次 RMSNorm：
 
