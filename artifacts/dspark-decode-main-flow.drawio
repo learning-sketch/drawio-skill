@@ -87,18 +87,12 @@
           <mxGeometry x="40" y="600" width="1200" height="260" as="geometry"/>
         </mxCell>
 
-        <mxCell id="keys" value="关键设计点" style="swimlane;startSize=28;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1;fontSize=13;rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="sec3">
+        <mxCell id="keys" value="关键设计点&#xa;&#xa;• verify 长度不固定，按 confidence 调度&#xa;• Planner 负责 budget + layout，Executor 负责执行与 accept&#xa;• 支持 compact / ragged verify 路径&#xa;• idle / DP 场景仍可参与&#xa;• propose / verify / accept 全程可观测" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=0;fontSize=12;align=left;verticalAlign=top;spacingLeft=14;spacingTop=10;" vertex="1" parent="sec3">
           <mxGeometry x="20" y="50" width="560" height="140" as="geometry"/>
         </mxCell>
-        <mxCell id="key_list" value="• verify 长度不固定，按 confidence 调度&#xa;• Planner 负责 budget + layout，Executor 负责执行与 accept&#xa;• 支持 compact / ragged verify 路径&#xa;• idle / DP 场景仍可参与&#xa;• propose / verify / accept 全程可观测" style="text;html=1;align=left;verticalAlign=top;spacingLeft=10;fontSize=12;whiteSpace=wrap;" vertex="1" parent="keys">
-          <mxGeometry x="12" y="36" width="536" height="92" as="geometry"/>
-        </mxCell>
 
-        <mxCell id="map" value="和总览图的对应关系" style="swimlane;startSize=28;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=13;rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="sec3">
+        <mxCell id="map" value="和总览图的对应关系&#xa;&#xa;• Proposer：提出候选 blocks&#xa;• Planner：决定 verify 长度&#xa;• Executor：执行 verify 与 accept&#xa;• Injector：维护 draft KV cache&#xa;• Worker：编排以上组件" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=0;fontSize=12;align=left;verticalAlign=top;spacingLeft=14;spacingTop=10;" vertex="1" parent="sec3">
           <mxGeometry x="600" y="50" width="580" height="140" as="geometry"/>
-        </mxCell>
-        <mxCell id="map_list" value="• Proposer：提出候选 blocks&#xa;• Planner：决定 verify 长度&#xa;• Executor：执行 verify 与 accept&#xa;• Injector：维护 draft KV cache&#xa;• Worker：编排以上组件" style="text;html=1;align=left;verticalAlign=top;spacingLeft=10;fontSize=12;whiteSpace=wrap;" vertex="1" parent="map">
-          <mxGeometry x="12" y="36" width="556" height="92" as="geometry"/>
         </mxCell>
 
         <mxCell id="summary" value="社区版 DSpark 的 decode 关键：不是 draft 完就验满，而是 propose 后按 confidence 调度 verify 窗口，再由 target 验证提交。" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=left;spacingLeft=14;spacingRight=12;fontSize=12;verticalAlign=middle;" vertex="1" parent="sec3">
