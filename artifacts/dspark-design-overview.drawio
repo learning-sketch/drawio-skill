@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="drawio" version="26.0.0" type="device">
+  <diagram id="dspark-design" name="方案设计">
+    <mxGraphModel dx="1400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1460" pageHeight="710" math="0" shadow="0" background="#faf6ee">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="title" value="&lt;b&gt;方案设计：社区合入版 DSpark（PR #30261）&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;fontSize=22;fontColor=#16418c;" vertex="1" parent="1">
+          <mxGeometry x="40" y="12" width="1380" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- (1) 核心思想 -->
+        <mxCell id="core" value="" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#9fb6dd;" vertex="1" parent="1">
+          <mxGeometry x="40" y="58" width="1380" height="66" as="geometry"/>
+        </mxCell>
+        <mxCell id="core_h" value="&lt;b&gt;(1) 核心思想&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=13;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="14" y="18" width="100" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="core1" value="•  半自回归 block drafting" style="text;html=1;align=left;verticalAlign=middle;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="122" y="18" width="180" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="core2" value="•  confidence-scheduled、&#xa;    variable-length verify" style="text;html=1;align=left;verticalAlign=middle;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="312" y="10" width="185" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="core3" value="•  组件化：dspark_components/" style="text;html=1;align=left;verticalAlign=middle;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="508" y="18" width="220" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="core4" value="•  draft 依赖 target hidden → 注入 draft KV&lt;br&gt;&lt;font color=&quot;#8b8577&quot;&gt;    Prefill inject；Decode commit 后续维护&lt;/font&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="740" y="10" width="300" height="46" as="geometry"/>
+        </mxCell>
+        <mxCell id="core5" value="•  目标：可扩展、可调度、可观测" style="text;html=1;align=left;verticalAlign=middle;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="core">
+          <mxGeometry x="1064" y="18" width="300" height="30" as="geometry"/>
+        </mxCell>
+
+        <!-- (2) 组件架构 panel -->
+        <mxCell id="arch" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="138" width="950" height="400" as="geometry"/>
+        </mxCell>
+        <mxCell id="arch_h" value="&lt;b&gt;(2) 组件架构&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="14" y="8" width="160" height="26" as="geometry"/>
+        </mxCell>
+
+        <!-- top boxes -->
+        <mxCell id="topA" value="speculative-algorithm DSPARK" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="180" y="24" width="230" height="34" as="geometry"/>
+        </mxCell>
+        <mxCell id="topB" value="dspark_config / runtime config" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="440" y="24" width="230" height="34" as="geometry"/>
+        </mxCell>
+
+        <!-- center worker -->
+        <mxCell id="worker" value="&lt;b&gt;&lt;font color=&quot;#3d9a50&quot; style=&quot;font-size:13px&quot;&gt;DSparkWorkerV2&lt;/font&gt;&lt;font color=&quot;#e07b1f&quot;&gt;（编排中心）&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;1. 选择路径：prefill / decode / idle&lt;br&gt;&lt;br&gt;2. 串联：propose → plan → verify → commit&lt;br&gt;&lt;br&gt;3. 维护跨步状态：draft_input / seq_lens&lt;br&gt;&lt;br&gt;4. 对接 runtime：scheduler / cuda graph /&lt;br&gt;    ragged verify" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f2f9ec;strokeColor=#82b366;fontSize=11;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=12;spacingTop=8;spacingRight=8;" vertex="1" parent="arch">
+          <mxGeometry x="300" y="110" width="260" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- left column -->
+        <mxCell id="proposer" value="&lt;b&gt;DraftBlockProposer&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="16" y="110" width="160" height="44" as="geometry"/>
+        </mxCell>
+        <mxCell id="plannerc" value="&lt;b&gt;DSparkVerifyPlanner&lt;/b&gt;&lt;br&gt;budget + layout" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="16" y="180" width="160" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="executor" value="&lt;b&gt;TargetVerifyExecutor&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="16" y="258" width="160" height="44" as="geometry"/>
+        </mxCell>
+
+        <!-- right column -->
+        <mxCell id="injector" value="&lt;b&gt;TargetHiddenKvInjector&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#8b8577&quot; style=&quot;font-size:10px&quot;&gt;Prefill: inject_target_hidden&lt;br&gt;Decode commit 后续维护&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="710" y="104" width="220" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="obs" value="&lt;b&gt;Observability /&lt;br&gt;BlockAcceptEstimator&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="710" y="188" width="220" height="48" as="geometry"/>
+        </mxCell>
+        <mxCell id="sps" value="&lt;b&gt;SPS cost table + STS&lt;/b&gt;&lt;br&gt;（confidence 校准）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="710" y="260" width="220" height="48" as="geometry"/>
+        </mxCell>
+
+        <!-- bottom row -->
+        <mxCell id="bot1" value="scheduler / model_runner" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="110" y="346" width="190" height="38" as="geometry"/>
+        </mxCell>
+        <mxCell id="bot2" value="ragged verify / cuda graph" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="320" y="346" width="190" height="38" as="geometry"/>
+        </mxCell>
+        <mxCell id="bot3" value="DeepseekV4ForCausalLMDSpark&#xa;/ dspark model" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="arch">
+          <mxGeometry x="530" y="342" width="230" height="44" as="geometry"/>
+        </mxCell>
+
+        <!-- edges inside arch -->
+        <mxCell id="a_reg1" value="注册/配置" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.35;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="arch" source="topA" target="worker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_reg2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.65;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="arch" source="topB" target="worker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_prop" value="生成候选 token block" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.15;entryDx=0;entryDy=0;" edge="1" parent="arch" source="proposer" target="worker">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-9"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_plan" value="决定 verify 多长" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="arch" source="plannerc" target="worker">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-9"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_exec" value="执行 verify &amp;amp; accept" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="arch" source="worker" target="executor">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-9"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_inj" value="维护 draft KV" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.15;entryDx=0;entryDy=0;" edge="1" parent="arch" source="injector" target="worker">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" x="0" y="-9"/>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="a_obs" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="arch" source="obs" target="worker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_sps" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;" edge="1" parent="arch" source="sps" target="worker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a_run" value="调度执行" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;fontSize=10.5;fontColor=#1f3864;labelBackgroundColor=#fdfcf8;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="arch" source="bot2" target="worker">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- Decode 主链路 strip -->
+        <mxCell id="chain" value="" style="rounded=1;arcSize=8;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="40" y="552" width="950" height="58" as="geometry"/>
+        </mxCell>
+        <mxCell id="chain_h" value="&lt;b&gt;Decode 主链路&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f2ea;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="16" y="13" width="110" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c1" value="propose" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="150" y="13" width="105" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c2" value="confidence/budget" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="295" y="13" width="135" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c3" value="schedule layout" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="470" y="13" width="130" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c4" value="verify" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="640" y="13" width="100" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="c5" value="accept/commit" style="rounded=1;arcSize=10;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#8c8578;fontSize=11.5;fontColor=#1f3864;" vertex="1" parent="chain">
+          <mxGeometry x="780" y="13" width="130" height="32" as="geometry"/>
+        </mxCell>
+        <mxCell id="ce1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="chain" source="c1" target="c2">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ce2" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="chain" source="c2" target="c3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ce3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="chain" source="c3" target="c4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ce4" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;strokeColor=#1f3864;strokeWidth=1.5;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="chain" source="c4" target="c5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- (3) 和 #29538 的差异 -->
+        <mxCell id="diff" value="" style="rounded=1;arcSize=4;whiteSpace=wrap;html=1;fillColor=#fdfcf8;strokeColor=#b9b3a5;container=1;pointerEvents=0;collapsible=0;" vertex="1" parent="1">
+          <mxGeometry x="1010" y="138" width="410" height="472" as="geometry"/>
+        </mxCell>
+        <mxCell id="diff_h" value="&lt;b&gt;(3) 和 #29538 的差异&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="diff">
+          <mxGeometry x="14" y="8" width="240" height="26" as="geometry"/>
+        </mxCell>
+        <mxCell id="d1" value="&lt;font style=&quot;font-size:15px&quot;&gt;✅&lt;/font&gt;  从单体 worker 拆成组件包" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#1f3864;spacingLeft=14;" vertex="1" parent="diff">
+          <mxGeometry x="10" y="56" width="390" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="d2" value="&lt;font style=&quot;font-size:15px&quot;&gt;✅&lt;/font&gt;  增加 confidence 调度的可变长 verify" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#1f3864;spacingLeft=14;" vertex="1" parent="diff">
+          <mxGeometry x="10" y="136" width="390" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="d3" value="&lt;font style=&quot;font-size:15px&quot;&gt;✅&lt;/font&gt;  支持 compact / ragged verify 路径" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#1f3864;spacingLeft=14;" vertex="1" parent="diff">
+          <mxGeometry x="10" y="216" width="390" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="d4" value="&lt;font style=&quot;font-size:15px&quot;&gt;✅&lt;/font&gt;  增加 SPS/STS 调度与校准能力" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#1f3864;spacingLeft=14;" vertex="1" parent="diff">
+          <mxGeometry x="10" y="296" width="390" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="d5" value="&lt;font style=&quot;font-size:15px&quot;&gt;✅&lt;/font&gt;  更强 observability" style="text;html=1;align=left;verticalAlign=middle;fontSize=12.5;fontColor=#1f3864;spacingLeft=14;" vertex="1" parent="diff">
+          <mxGeometry x="10" y="376" width="390" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Bottom summary -->
+        <mxCell id="summary" value="&lt;b&gt;#30261 不是只把 DSpark 跑通，而是把它做成可调度的组件化 speculative 系统。&lt;/b&gt;" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#f5f2ea;strokeColor=#b9b3a5;fontSize=14;fontColor=#1f3864;align=center;verticalAlign=middle;" vertex="1" parent="1">
+          <mxGeometry x="40" y="628" width="1380" height="54" as="geometry"/>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
