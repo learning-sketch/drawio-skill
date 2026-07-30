@@ -56,7 +56,7 @@
         </mxCell>
 
         <!-- Decode box -->
-        <mxCell id="decode" value="&lt;b&gt;&lt;font color=&quot;#3d9a50&quot; style=&quot;font-size:12.5px&quot;&gt;Decode 实例&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;1.  接收 KV + aux metadata&lt;br&gt;2.  build_dspark_disagg_draft_input(…)&lt;br&gt;3.  用 hidden / prefill_tail 重建 draft 启动上下文&lt;br&gt;     （对齐非 PD 路径的 draft 初始状态）&lt;br&gt;4.  进入正常 DSpark：draft → refine → verify&lt;br&gt;5.  后续 decode 轮次继续 speculative loop" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
+        <mxCell id="decode" value="&lt;b&gt;&lt;font color=&quot;#3d9a50&quot; style=&quot;font-size:12.5px&quot;&gt;Decode 实例&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;1.  接收 KV + aux metadata&lt;br&gt;2.  build_dflash_disagg_draft_input(…)&lt;br&gt;3.  用 hidden / prefill_tail 重建 draft 启动上下文&lt;br&gt;     （对齐非 PD 路径的 draft 初始状态）&lt;br&gt;4.  进入正常 DSpark：draft → refine → verify&lt;br&gt;5.  后续 decode 轮次继续 speculative loop" style="rounded=1;arcSize=6;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10.5;fontColor=#1f3864;align=left;verticalAlign=top;spacingLeft=10;spacingTop=8;spacingRight=6;" vertex="1" parent="p2">
           <mxGeometry x="606" y="76" width="300" height="196" as="geometry"/>
         </mxCell>
 

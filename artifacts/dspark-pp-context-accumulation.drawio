@@ -115,7 +115,7 @@
         <mxCell id="impl_h" value="&lt;b&gt;实现要点&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;fontSize=14;fontColor=#1f3864;" vertex="1" parent="impl">
           <mxGeometry x="14" y="8" width="240" height="26" as="geometry"/>
         </mxCell>
-        <mxCell id="impl_list" value="1)  &lt;font face=&quot;Courier New&quot;&gt;project_target_hidden_partial(…)&lt;/font&gt;&lt;br&gt;&lt;br&gt;2)  扩展 PP proxy：携带 &lt;font face=&quot;Courier New&quot;&gt;dspark_ctx_acc&lt;/font&gt;&lt;br&gt;     （替代/补充 raw aux hidden）&lt;br&gt;&lt;br&gt;3)  最后一层 PP：&lt;br&gt;     &lt;font face=&quot;Courier New&quot;&gt;hidden_norm + KVProj&lt;/font&gt; + 写 draft KV" style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1f3864;spacingLeft=16;spacingTop=4;whiteSpace=wrap;" vertex="1" parent="impl">
+        <mxCell id="impl_list" value="1)  &lt;font face=&quot;Courier New&quot;&gt;project_target_hidden_partial(…)&lt;/font&gt;&lt;br&gt;&lt;br&gt;2)  扩展 PP proxy：携带 &lt;font face=&quot;Courier New&quot;&gt;dspark_ctx_acc&lt;/font&gt;&lt;br&gt;     （替代/补充 raw aux hidden）&lt;br&gt;&lt;br&gt;3)  最后一层 PP：&lt;br&gt;     &lt;font face=&quot;Courier New&quot;&gt;RMSNorm(ctx_acc) + KVProj&lt;/font&gt; + 写 draft KV" style="text;html=1;align=left;verticalAlign=top;fontSize=11.5;fontColor=#1f3864;spacingLeft=16;spacingTop=4;whiteSpace=wrap;" vertex="1" parent="impl">
           <mxGeometry x="10" y="42" width="420" height="168" as="geometry"/>
         </mxCell>
 

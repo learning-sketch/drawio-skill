@@ -27,11 +27,11 @@
         <mxCell id="in2" value="•  bonus token / 当前序列状态" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#1f3864;" vertex="1" parent="inbox">
           <mxGeometry x="262" y="16" width="230" height="30" as="geometry"/>
         </mxCell>
-        <mxCell id="in3" value="•  block_size（默认 5）" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#1f3864;" vertex="1" parent="inbox">
-          <mxGeometry x="516" y="16" width="190" height="30" as="geometry"/>
+        <mxCell id="in3" value="•  block_size = gamma（默认从 checkpoint 推断）" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#1f3864;" vertex="1" parent="inbox">
+          <mxGeometry x="516" y="16" width="260" height="30" as="geometry"/>
         </mxCell>
         <mxCell id="in4" value="•  confidence_threshold" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontColor=#1f3864;" vertex="1" parent="inbox">
-          <mxGeometry x="722" y="16" width="200" height="30" as="geometry"/>
+          <mxGeometry x="792" y="16" width="200" height="30" as="geometry"/>
         </mxCell>
         <mxCell id="in_sep" value="" style="endArrow=none;html=1;strokeColor=#d8d2c4;" edge="1" parent="inbox">
           <mxGeometry relative="1" as="geometry">
